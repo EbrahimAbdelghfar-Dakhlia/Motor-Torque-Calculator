@@ -1,0 +1,230 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Motor Torque Calculator for Wheeled Robot</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        .input-group {
+            position: relative;
+        }
+        .input-unit {
+            position: absolute;
+            right: 0.75rem;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #9ca3af;
+            font-size: 0.875rem;
+            pointer-events: none; /* Prevents unit text from capturing mouse events */
+        }
+        /* Hide number input spinners for a cleaner look, optional */
+        input[type=number]::-webkit-inner-spin-button, 
+        input[type=number]::-webkit-outer-spin-button { 
+          -webkit-appearance: none; 
+          margin: 0; 
+        }
+        input[type=number] {
+          -moz-appearance: textfield;
+        }
+    </style>
+</head>
+<body class="bg-gray-900 text-white flex items-center justify-center min-h-screen p-4">
+
+    <div class="w-full max-w-4xl bg-gray-800 rounded-2xl shadow-2xl p-6 md:p-8">
+        
+        <!-- Header -->
+        <div class="text-center mb-8">
+            <h1 class="text-3xl md:text-4xl font-bold text-cyan-400">Motor Torque Calculator</h1>
+            <p class="text-gray-400 mt-2">Determine the required torque for your wheeled robot and trailer.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+            
+            <!-- Input Section -->
+            <div class="bg-gray-700/50 p-6 rounded-xl">
+                <h2 class="text-2xl font-semibold mb-6 border-b-2 border-cyan-500 pb-2">Parameters</h2>
+                
+                <div class="space-y-4">
+                    <!-- Mass Inputs -->
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="input-group">
+                            <label for="robotMass" class="block text-sm font-medium text-gray-300 mb-1">Robot Mass</label>
+                            <input type="number" id="robotMass" value="10" class="w-full bg-gray-800 border-gray-600 rounded-lg p-2.5 pr-14 focus:ring-cyan-500 focus:border-cyan-500 block">
+                            <span class="input-unit">kg</span>
+                        </div>
+                        <div class="input-group">
+                            <label for="trailerMass" class="block text-sm font-medium text-gray-300 mb-1">Trailer Mass</label>
+                            <input type="number" id="trailerMass" value="20" class="w-full bg-gray-800 border-gray-600 rounded-lg p-2.5 pr-14 focus:ring-cyan-500 focus:border-cyan-500 block">
+                            <span class="input-unit">kg</span>
+                        </div>
+                    </div>
+
+                    <!-- Coefficient of Rolling Resistance -->
+                    <div class="input-group">
+                        <label for="rollingCoefficient" class="block text-sm font-medium text-gray-300 mb-1">Coefficient of Rolling Resistance (Crr)</label>
+                        <input type="number" step="0.001" id="rollingCoefficient" value="0.015" class="w-full bg-gray-800 border-gray-600 rounded-lg p-2.5 focus:ring-cyan-500 focus:border-cyan-500 block">
+                    </div>
+
+                    <!-- Incline Slope -->
+                    <div class="input-group">
+                        <label for="inclineSlope" class="block text-sm font-medium text-gray-300 mb-1">Incline Slope</label>
+                        <input type="number" id="inclineSlope" value="5" class="w-full bg-gray-800 border-gray-600 rounded-lg p-2.5 pr-20 focus:ring-cyan-500 focus:border-cyan-500 block">
+                        <span class="input-unit">degrees</span>
+                    </div>
+
+                    <!-- Max Acceleration -->
+                    <div class="input-group">
+                        <label for="maxAcceleration" class="block text-sm font-medium text-gray-300 mb-1">Desired Acceleration</label>
+                        <input type="number" step="0.1" id="maxAcceleration" value="0.5" class="w-full bg-gray-800 border-gray-600 rounded-lg p-2.5 pr-16 focus:ring-cyan-500 focus:border-cyan-500 block">
+                        <span class="input-unit">m/s²</span>
+                    </div>
+                    
+                    <!-- Wheel Radius -->
+                    <div class="input-group">
+                        <label for="wheelRadius" class="block text-sm font-medium text-gray-300 mb-1">Driven Wheel Radius</label>
+                        <input type="number" step="0.01" id="wheelRadius" value="0.1" class="w-full bg-gray-800 border-gray-600 rounded-lg p-2.5 pr-20 focus:ring-cyan-500 focus:border-cyan-500 block">
+                        <span class="input-unit">meters</span>
+                    </div>
+
+                    <!-- Drivetrain Parameters -->
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="input-group">
+                            <label for="gearboxRatio" class="block text-sm font-medium text-gray-300 mb-1">Gearbox Ratio</label>
+                            <input type="number" id="gearboxRatio" value="10" class="w-full bg-gray-800 border-gray-600 rounded-lg p-2.5 pr-12 focus:ring-cyan-500 focus:border-cyan-500 block">
+                            <span class="input-unit">: 1</span>
+                        </div>
+                         <div class="input-group">
+                            <label for="drivenWheels" class="block text-sm font-medium text-gray-300 mb-1">Driven Wheels</label>
+                            <input type="number" id="drivenWheels" value="2" class="w-full bg-gray-800 border-gray-600 rounded-lg p-2.5 focus:ring-cyan-500 focus:border-cyan-500 block">
+                        </div>
+                    </div>
+                    
+                    <!-- Efficiency & Safety Factor -->
+                    <div class="grid grid-cols-2 gap-4">
+                        <div class="input-group">
+                            <label for="efficiency" class="block text-sm font-medium text-gray-300 mb-1">Drivetrain Efficiency</label>
+                            <input type="number" id="efficiency" value="90" class="w-full bg-gray-800 border-gray-600 rounded-lg p-2.5 pr-12 focus:ring-cyan-500 focus:border-cyan-500 block">
+                            <span class="input-unit">%</span>
+                        </div>
+                        <div class="input-group">
+                            <label for="safetyFactor" class="block text-sm font-medium text-gray-300 mb-1">Safety Factor</label>
+                            <input type="number" id="safetyFactor" value="25" class="w-full bg-gray-800 border-gray-600 rounded-lg p-2.5 pr-12 focus:ring-cyan-500 focus:border-cyan-500 block">
+                            <span class="input-unit">%</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Results Section -->
+            <div class="bg-gray-900/50 p-6 rounded-xl flex flex-col">
+                <h2 class="text-2xl font-semibold mb-6 border-b-2 border-cyan-500 pb-2">Results</h2>
+                
+                <div class="flex-grow flex flex-col justify-center items-center space-y-8">
+                    <!-- Total Force -->
+                    <div class="text-center">
+                        <h3 class="text-lg text-gray-400">Total Tractive Force</h3>
+                        <p id="totalForceResult" class="text-4xl font-bold text-cyan-400">0.00</p>
+                        <p class="text-gray-500">Newtons</p>
+                    </div>
+
+                    <!-- Required Torque -->
+                    <div class="text-center">
+                        <h3 class="text-lg text-gray-400">Required Torque per Motor</h3>
+                        <p id="motorTorqueResult" class="text-6xl font-bold text-white">0.00</p>
+                        <p class="text-gray-500">Nm</p>
+                    </div>
+                </div>
+
+                <button id="calculateBtn" class="w-full mt-8 bg-cyan-600 hover:bg-cyan-700 text-white font-bold py-3 px-4 rounded-lg transition-all duration-300 shadow-lg hover:shadow-cyan-500/50">
+                    Calculate Torque
+                </button>
+                <div id="error-message" class="text-red-400 text-center mt-4 h-5"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // --- DOM Element Selection ---
+        const robotMassInput = document.getElementById('robotMass');
+        const trailerMassInput = document.getElementById('trailerMass');
+        const rollingCoefficientInput = document.getElementById('rollingCoefficient');
+        const inclineSlopeInput = document.getElementById('inclineSlope');
+        const maxAccelerationInput = document.getElementById('maxAcceleration');
+        const wheelRadiusInput = document.getElementById('wheelRadius');
+        const gearboxRatioInput = document.getElementById('gearboxRatio');
+        const drivenWheelsInput = document.getElementById('drivenWheels'); // New input
+        const efficiencyInput = document.getElementById('efficiency');
+        const safetyFactorInput = document.getElementById('safetyFactor');
+        const calculateBtn = document.getElementById('calculateBtn');
+        const totalForceResultElem = document.getElementById('totalForceResult');
+        const motorTorqueResultElem = document.getElementById('motorTorqueResult');
+        const errorMessageElem = document.getElementById('error-message');
+
+        // --- Main Calculation Logic ---
+        function calculateTorque() {
+            // 1. Get and parse all input values
+            const robotMass = parseFloat(robotMassInput.value) || 0;
+            const trailerMass = parseFloat(trailerMassInput.value) || 0;
+            const crr = parseFloat(rollingCoefficientInput.value);
+            const inclineDeg = parseFloat(inclineSlopeInput.value) || 0;
+            const acceleration = parseFloat(maxAccelerationInput.value) || 0;
+            const wheelRadius = parseFloat(wheelRadiusInput.value);
+            const gearRatio = parseFloat(gearboxRatioInput.value);
+            const drivenWheels = parseInt(drivenWheelsInput.value) || 1; // New value, default to 1
+            const efficiency = parseFloat(efficiencyInput.value) || 100;
+            const safetyFactor = parseFloat(safetyFactorInput.value) || 0;
+
+            // --- Input Validation ---
+            const inputs = [crr, wheelRadius, gearRatio, drivenWheels];
+            if (inputs.some(isNaN) || wheelRadius <= 0 || gearRatio <= 0 || drivenWheels <= 0) {
+                errorMessageElem.textContent = 'Please fill all fields with valid, positive numbers.';
+                totalForceResultElem.textContent = '0.00';
+                motorTorqueResultElem.textContent = '0.00';
+                return;
+            }
+            errorMessageElem.textContent = '';
+
+
+            // 2. Define Constants
+            const g = 9.81; // Acceleration due to gravity (m/s^2)
+
+            // 3. Calculate intermediate values
+            const totalMass = robotMass + trailerMass;
+            const inclineRad = inclineDeg * (Math.PI / 180); // Convert incline to radians
+
+            // 4. Calculate individual forces
+            const forceRolling = crr * totalMass * g * Math.cos(inclineRad);
+            const forceGrade = totalMass * g * Math.sin(inclineRad);
+            const forceAcceleration = totalMass * acceleration;
+
+            // 5. Calculate total tractive force
+            const totalForce = forceRolling + forceGrade + forceAcceleration;
+
+            // 6. Calculate total torque required from the motor system
+            const totalMotorTorque = (totalForce * wheelRadius) / (gearRatio * (efficiency / 100));
+
+            // 7. Apply safety factor to the total torque
+            const totalFinalTorque = totalMotorTorque * ((safetyFactor / 100));
+            
+            // 8. Distribute the total torque among the driven wheels/motors
+            const torquePerMotor = totalFinalTorque / drivenWheels;
+
+            // 9. Display the results
+            totalForceResultElem.textContent = totalForce.toFixed(2);
+            motorTorqueResultElem.textContent = torquePerMotor.toFixed(2);
+        }
+
+        // --- Event Listener ---
+        calculateBtn.addEventListener('click', calculateTorque);
+        
+        // --- Initial Calculation on Load ---
+        window.onload = calculateTorque;
+
+    </script>
+</body>
+</html>
